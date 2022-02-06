@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><title>Mon 1er jeu Phaser</title>
+<script
+src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+<style type="text/css"> body { margin: 0; }</style>
+</head>
+<body>
+<script type="text/javascript">
+var config = {
+    type: Phaser.AUTO,
+    width: 1080, height: 1000,  //paramètre 1080, 1000 2580, 1000
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 400 },
+            debug: false
+}},
+    scene: {preload: preload, create: create, update: update }
+};
+new Phaser.Game(config);
+function preload(){
+    this.load.image('sky', 'assets/sky.png');
+    this.load.image('ground', 'assets/platform.png');
+    this.load.image('unbloc', 'assets/unbloc.png');
+    this.load.image('deuxblocs', 'assets/deuxblocs.png');
+    this.load.image('deuxcotes', 'assets/deuxcotes.png');
+    this.load.image('troisblocs', 'assets/troisblocs.png');
+    this.load.image('troiscotes', 'assets/troiscotes.png');
+    this.load.image('litplatform', 'assets/litplatform.png');
+    this.load.image('longplatform', 'assets/longplatform.png');
+    this.load.image('toutepetiteplatform', 'assets/toutepetiteplatform.png');
+    this.load.image('leftcorner', 'assets/Left_Corner.png');
+    this.load.image('leftside', 'assets/Left_Side.png');
+    this.load.image('star', 'assets/star.png');
+    this.load.image('bomb', 'assets/bomb.png');
+    this.load.image('Pics', 'assets/Pics.png');
+    this.load.image('Leftpic', 'assets/Leftpic.png');
+    this.load.image('Rightpic', 'assets/Rightpic.png');
+    this.load.image('Downpic', 'assets/Downpic.png');
+    this.load.image('Colonne', 'assets/ColonnePrincipale.png');
+    this.load.image('Grandecolonne', 'assets/Grandecolonne.png');
+    this.load.image('Grandecolonne2', 'assets/Grandecolonne2.png');
+    this.load.image('Plusgrandecolonne', 'assets/Plusgrandecolonne.png');
+    this.load.image('Plusgrandeligne', 'assets/Plusgrandeligne.png');
+    this.load.image('100health', 'assets/100health.png')
+    this.load.image('50health', 'assets/50health.png')
+    this.load.image('25health', 'assets/25Health.png')
+    this.load.image('0health', 'assets/0Health.png')
+    this.load.spritesheet('perso','assets/perso.png',
+        { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('feu_follet', 'assets/feu_follet.png',
+        { frameWidth: 32, frameHeight: 36 });
+}
+var platforms;
+var player;
+var feu_follet;
+var stars;
+var score;
+score = 0
+var scoreText;
+var cursors;
+var bombs;
+var gameOver;
+var clavier;
+gameOver = false;
+var compteurdoublesaut;
+compteurdoublesaut = false;
+
+function create(){
+    clavier = this.input.keyboard.addKeys('W,A,D,SPACE');
+    cursors = this.input.keyboard.createCursorKeys(); 
+    this.add.image(2870, 500, 'sky');  // paramètres à regler : 2870, 500
+    platforms = this.physics.add.staticGroup();
+    platforms.create(200, 612, 'litplatform');// Plateforme début-bas
+    platforms.create(50, 468, 'ground');  // Plateforme milieu-gauche
+    platforms.create(450, 468, 'ground'); // Plateforme base
+    platforms.create(600, 615, 'ground'); // Plateforme milieu-bas
+    platforms.create(600, 380, 'ground'); // Plateforme milieu
+    platforms.create(50, 248, 'ground');  // Plateforme haut-Gauche
+    platforms.create(570, 248, 'ground'); // Plateforme milieu-Haut
+    platforms.create(9, 170, 'leftside'); // Murs Gauche
+    platforms.create(9, 50, 'leftside');  // Murs Gauche
+    //Séparation murs haut / murs bas
+    platforms.create(57, 725, 'unbloc');  // bloc bas - gauche
+    platforms.create(41, 717, 'deuxblocs');  // bloc bas - gauche
+    platforms.create(25, 710, 'troisblocs');  // bloc bas - gauche
+    platforms.create(320, 748, 'longplatform');  // Plateforme bas-gauche
+    platforms.create(9, 670, 'leftside'); // Murs Gauche bas
+    platforms.create(9, 545, 'leftside');  // Murs Gauche
+    platforms.create(783, 498, 'Colonne');// Colonne départ
+    // Séparation milieu 1er écran
+    platforms.create(1000, 380, 'litplatform');// Plateforme milieu saut
+    platforms.create(808, 643, 'toutepetiteplatform');  // Plateforme remontée
+    platforms.create(1200, 748, 'longplatform');  // Plateforme bas-droite
+    platforms.create(968, 498, 'Colonne');// Colonne départ
+    platforms.create(936, 590, 'deuxcotes');// 2 blocs pour remonter (bas)
+    platforms.create(815, 500, 'deuxcotes');// 2 blocs pour remonter (bas-1)
+    platforms.create(936, 408, 'deuxcotes');// 2 blocs pour remonter (bas-2)
+    platforms.create(1250, 597, 'Grandecolonne');// Colonne de fin
+    platforms.create(1202, 643, 'troiscotes');// 3 blocs pour remonter 
+    platforms.create(1008, 570, 'troiscotes');// 3 blocs pour remonter -1
+    platforms.create(1202, 500, 'troiscotes');// 3 blocs pour remonter -2
+    // Séparation fin écran 1
+    platforms.create(1250, 380, 'litplatform');// Plateforme milieu saut
+    platforms.create(1627, 335, 'Plusgrandecolonne');// Colonne de fin de niveau
+    platforms.create(2000, 748, 'longplatform');  // Plateforme bas-droite 2
+    platforms.create(2600, 748, 'longplatform');  // Plateforme bas-droite 2ème niveau
+    platforms.create(1587, 658, 'deuxcotes');// 2 blocs pour remonter (bas-2)
+    platforms.create(1290, 490, 'deuxcotes');// 2 blocs pour remonter (bas-3)
+    platforms.create(1430, 580, 'litplatform');// Plateforme fin saut
+    // 2ème niveau 
+    // 1ère colonne
+    platforms.create(1900, 600, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(1900, 350, 'Grandecolonne2');// 1ère Colonne départ part 2/2
+    platforms.create(1852, 650, 'troiscotes');    // 3 blocs pour remonter
+    platforms.create(1675, 570, 'troiscotes');// 3 blocs pour remonter
+    platforms.create(1852, 490, 'troiscotes');    // 3 blocs pour remonter
+    platforms.create(1675, 400, 'troiscotes');// 3 blocs pour remonter
+    platforms.create(1852, 315, 'troiscotes');    // 3 blocs pour remonter
+    // milieu 2ème niveau
+    platforms.create(1948, 315, 'troiscotes');    // 3 blocs pour remonter
+    platforms.create(2080, 400, 'troiscotes');    // 3 blocs pour remonter
+    platforms.create(1948, 490, 'troiscotes');    // 3 blocs pour remonter
+    platforms.create(2080, 570, 'troiscotes');    // 3 blocs pour remonter
+    platforms.create(1948, 650, 'troiscotes');    // 3 blocs pour remonter
+    platforms.create(2150, 200, 'litplatform');   // Plateforme 1er saut
+    platforms.create(1987, 24, 'Plusgrandeligne');// Plateforme 1er saut
+    platforms.create(4520, 748, 'longplatform');// Plateforme 1er saut
+    platforms.create(2550, 300, 'ground');   // Plateforme 1er saut
+    platforms.create(2930, 400, 'litplatform');// Plateforme 2ème saut
+    platforms.create(3560, 748, 'longplatform');// Plateforme 1er saut
+    platforms.create(3100, 600, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(3100, 200, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(3460, 488, 'Plusgrandeligne'); // 1ère Colonne niveau2
+    platforms.create(3460, 312, 'Plusgrandeligne'); // 1ère Colonne niveau2
+    platforms.create(3170, 456, 'unbloc');  // bloc 
+    platforms.create(3186, 448, 'deuxblocs');  // blocs
+    platforms.create(3602, 456, 'unbloc');  // bloc 
+    platforms.create(3586, 448, 'deuxblocs');  // blocs
+    platforms.create(3930, 250, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(3100, 50, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(3930, 522, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(3570, 634, 'Plusgrandeligne'); // 1ère Colonne niveau2
+    platforms.create(3570, 138, 'Plusgrandeligne'); // 1ère Colonne niveau2
+    platforms.create(3890, 400, 'deuxcotes'); 
+    platforms.create(3140, 210, 'deuxcotes'); 
+
+    // 3 niveau
+    platforms.create(5048, 748, 'litplatform');
+    platforms.create(5144, 748, 'litplatform');
+    platforms.create(5240, 748, 'litplatform');
+    
+    platforms.create(5309, 479, 'litplatform');
+    platforms.create(5309, 323, 'litplatform');
+    platforms.create(5350, 439, 'troisblocs');
+    platforms.create(5350, 399, 'troisblocs');
+    platforms.create(5350, 359, 'troisblocs');
+
+    platforms.create(4360, 488, 'Plusgrandeligne'); // 1ère Colonne niveau2
+    platforms.create(4360, 312, 'Plusgrandeligne'); // 1ère Colonne niveau2
+    platforms.create(4290, 138, 'Plusgrandeligne'); // 1ère Colonne niveau2
+    platforms.create(3950, 725, 'unbloc');  // bloc 
+    platforms.create(4032, 280, 'unbloc');  // bloc 
+    platforms.create(4680, 655, 'deuxcotes'); 
+    platforms.create(4550, 625, 'deuxcotes');
+    platforms.create(4435, 605, 'deuxcotes');
+    platforms.create(4260, 625, 'litplatform');
+    platforms.create(4070, 625, 'litplatform');
+    platforms.create(3970, 570, 'deuxcotes');
+
+    platforms.create(4720, 600, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(4867, 600, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(4720, 200, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(4867, 200, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(4720, 50, 'Grandecolonne'); // 1ère Colonne départ
+    
+    platforms.create(5067, 140, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(5067, 540, 'Grandecolonne'); // 1ère Colonne départ
+
+    platforms.create(5237, 200, 'Grandecolonne'); // 1ère Colonne départ
+    platforms.create(5237, 600, 'Grandecolonne'); // 1ère Colonne départ
+    health = this.add.image(100, 50, '100health')
+    health.setScrollFactor(0);
+
+    // Fin création plateforme
+
+    feu_follet = this.physics.add.sprite(3250, 400, 'feu_follet'); //stats 100, 150
+    feu_follet.setBounce(0.15);
+    feu_follet.setCollideWorldBounds(true);
+    this.physics.add.collider(feu_follet, platforms);
+    this.physics.add.collider(feu_follet, player);
+
+
+    player = this.physics.add.sprite(100, 150, 'perso'); //stats 100, 150 3250, 400
+    player.setBounce(0.15);
+    player.setCollideWorldBounds(true);
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(feu_follet, player);
+
+
+    Downpic = this.physics.add.staticGroup();
+    Downpic.create(2132, 56, 'Downpic');
+    Downpic.create(2150, 56, 'Downpic');
+    Downpic.create(2168, 56, 'Downpic');
+    Downpic.create(3091, 344, 'Downpic');
+    Downpic.create(3109, 344, 'Downpic');
+
+
+    this.physics.add.collider(player, Downpic, loose, null, this); 
+
+
+
+    Rightpic = this.physics.add.staticGroup();
+    Rightpic.create(1707, 570, 'Rightpic');
+    Rightpic.create(1707, 400, 'Rightpic');
+    Rightpic.create(2986, 402, 'Rightpic'); // pic 2ème plateforme de saut
+
+    this.physics.add.collider(player, Rightpic, loose, null, this); 
+
+
+
+    Leftpic = this.physics.add.staticGroup();
+    Leftpic.create(1820, 650, 'Leftpic');
+    Leftpic.create(1820, 490, 'Leftpic');
+    Leftpic.create(1820, 315, 'Leftpic');
+    Leftpic.create(2874, 402, 'Leftpic');
+
+    this.physics.add.collider(player, Leftpic, loose, null, this); 
+    
+
+
+    Pics = this.physics.add.staticGroup();
+    Pics.create(354, 446, 'Pics');
+    Pics.create(336, 446, 'Pics');
+    Pics.create(318, 446, 'Pics');
+    Pics.create(300, 446, 'Pics');
+    //en bas
+    Pics.create(372, 725, 'Pics');
+    Pics.create(354, 725, 'Pics');
+    Pics.create(336, 725, 'Pics');
+    Pics.create(318, 725, 'Pics');
+    Pics.create(300, 725, 'Pics');
+    // à droite
+    Pics.create(1172, 725, 'Pics');
+    Pics.create(1154, 725, 'Pics');
+    Pics.create(1136, 725, 'Pics');
+    Pics.create(1118, 725, 'Pics');
+    Pics.create(1100, 725, 'Pics');
+    // 2ème niveau
+    Pics.create(1812, 725, 'Pics');
+    Pics.create(1794, 725, 'Pics');
+    Pics.create(1776, 725, 'Pics');
+    Pics.create(1758, 725, 'Pics');
+    Pics.create(1740, 725, 'Pics');
+    // Plateforme milieu
+    Pics.create(2392, 278, 'Pics');
+    Pics.create(2375, 278, 'Pics');
+    Pics.create(2358, 278, 'Pics');
+
+    Pics.create(2740, 278, 'Pics');
+    Pics.create(2600, 278, 'Pics');
+    Pics.create(2500, 278, 'Pics');
+
+    Pics.create(3517, 280, 'Pics');
+    Pics.create(3500, 280, 'Pics');
+
+    Pics.create(3417, 280, 'Pics');
+    Pics.create(3400, 280, 'Pics');
+
+    Pics.create(3617, 280, 'Pics');
+    Pics.create(3600, 280, 'Pics');
+    this.physics.add.collider(player, Pics, loose, null, this); 
+    // Caméra orientée joueur
+    this.cameras.main.zoom = 1,2;
+    this.physics.world.setBounds(0, 0, 5580, 2000); // 0, 0, 3080, 1000
+    this.cameras.main.setBounds(0, 0, 5680, 3600);   // 1000, 0, 3264, 1420 
+    this.cameras.main.startFollow(player);
+
+// création animation feu follet
+
+    this.anims.create({
+        key: 'gauche',
+        frames: this.anims.generateFrameNumbers('feu_follet', {start:0,end:19}),
+        frameRate: 10,
+        repeat: -1
+});
+    this.anims.create({
+            key: 'face',
+            frames: [ { key: 'feu_follet', frame: 20 } ],
+            frameRate: 20
+});
+    this.anims.create({
+            key: 'droite',
+            frames: this.anims.generateFrameNumbers('feu_follet', {start:21,end:40}),
+            frameRate: 10,
+            repeat: -1
+});
+
+// création animation personnage
+
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('perso', {start:0,end:6}),
+        frameRate: 10,
+        repeat: -1
+});
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'perso', frame: 7 } ],
+        frameRate: 20
+});
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('perso', {start:8,end:14}),
+        frameRate: 10,
+        repeat: -1
+    });
+        scoreText=this.add.text(5340,200,'Victory !',{fontSize:'32px',fill:'#000'});
+//affiche un texte à l’écran, pour le score
+stars = this.physics.add.group({
+key: 'star', repeat: 1,
+setXY: { x: 5320, y: 400, stepX: 70 }
+});
+this.physics.add.collider(stars, platforms);
+//et collisionne avec les plateformes
+this.physics.add.overlap(player, stars, collectStar, null, this);
+//le contact perso/étoile ne génère pas de collision (overlap)
+//mais en revanche cela déclenche une fonction collectStar
+
+bombs = this.physics.add.group();
+this.physics.add.collider(bombs, platforms);
+    this.physics.add.collider(player, bombs, hitBomb, null, this);
+}
+
+
+
+function update(){
+    
+
+    if (gameOver){return;}
+    if (clavier.A.isDown){ //si la touche gauche est appuyée
+        player.setVelocityX(-160); //alors vitesse négative en X
+        player.anims.play('left', true); //et animation => gauche
+    }
+    else if (clavier.D.isDown){ //sinon si la touche droite est appuyée
+        player.setVelocityX(160); //alors vitesse positive en X
+        player.anims.play('right', true); //et animation => droite
+    }
+    else{ // sinon
+        player.setVelocityX(0); //vitesse nulle
+        player.anims.play('turn'); //animation fait face caméra
+    }
+    if (clavier.SPACE.isDown && player.body.touching.down){
+        //si touche haut appuyée ET que le perso touche le sol
+        player.setVelocityY(-290); //alors vitesse verticale négative
+        //(on saute)
+    }}
+
+
+function collectStar(player, star){
+star.disableBody(true, true); // l’étoile disparaît
+if (stars.countActive(true) === 1){// si toutes les étoiles sont prises
+    scoreText=this.add.text(5200,450,'Victory !',{fontSize:'32px',fill:'#000'});
+    
+
+
+
+
+
+
+// si le perso est à gauche de l’écran, on met une bombe à droite
+// si non, on la met à gauche de l’écran
+var bomb = bombs.create(x, 16, 'bomb');
+bomb.setBounce(1);
+bomb.setCollideWorldBounds(true);
+bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+bomb.allowGravity = false; //elle n’est pas soumise à la gravité
+}
+
+}
+
+
+function hitBomb(player, bomb){
+this.physics.pause();
+player.setTint(0xff0000);
+player.anims.play('turn');
+gameOver = true;
+}
+
+
+function loose(player, Pics){
+this.physics.pause();
+player.setTint(0xff0000);
+player.anims.play('turn');
+gameOver = true;
+health.setTexture('0health');
+}
+
+// Feu_Follet + barre de vie
+
+
+</script>
+</body>
+</html>
